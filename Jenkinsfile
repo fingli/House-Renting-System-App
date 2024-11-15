@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOTNET_VERSION = '8.0.11' // Specify the exact .NET SDK version
+        DOTNET_VERSION = '8.0.x' // Specify the .NET version
     }
     stages {
         stage('Checkout') {
@@ -12,37 +12,29 @@ pipeline {
         stage('Setup .NET') {
             steps {
                 script {
-                    // Use PowerShell to set up .NET with the specified version
-                    powershell '''
-                        $url = "https://dot.net/v1/dotnet-install.ps1"
-                        $output = "dotnet-install.ps1"
-                        
-                        # Download the script
-                        Invoke-WebRequest -Uri $url -OutFile $output -UseBasicParsing
-
-                        # Run the script with the exact version
-                        .\\dotnet-install.ps1 -Version ${env.DOTNET_VERSION} -InstallDir $env:USERPROFILE\\.dotnet
-
-                        # Add .NET to PATH
-                        $env:PATH="$env:USERPROFILE\\.dotnet;$env:PATH"
-                        Write-Host "PATH is now: $env:PATH"
+                    // Use the 'sh' step to set up .NET
+                    sh '''
+                        wget https://dot.net/v1/dotnet-install.sh
+                        chmod +x dotnet-install.sh
+                        ./dotnet-install.sh --channel ${DOTNET_VERSION}
+                        export PATH=$HOME/.dotnet:$PATH
                     '''
                 }
             }
         }
         stage('Restore Dependencies') {
             steps {
-                powershell 'dotnet restore'
+                sh 'dotnet restore'
             }
         }
         stage('Build') {
             steps {
-                powershell 'dotnet build --no-restore'
+                sh 'dotnet build --no-restore'
             }
         }
         stage('Test') {
             steps {
-                powershell 'dotnet test --no-build --verbosity normal'
+                sh 'dotnet test --no-build --verbosity normal'
             }
         }
     }
