@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOTNET_VERSION = '8.0.100' // Specify the exact .NET SDK version (e.g., 8.0.100)
+        DOTNET_VERSION = '8.0.404' // Specify the exact .NET SDK version (e.g., 8.0.100)
     }
     stages {
         stage('Checkout') {
