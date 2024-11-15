@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOTNET_VERSION = '8.0.x' // Specify the .NET version
+        DOTNET_VERSION = '8.0.100' // Specify the exact .NET SDK version (e.g., 8.0.100)
     }
     stages {
         stage('Checkout') {
@@ -13,10 +13,10 @@ pipeline {
         stage('Setup .NET') {
             steps {
                 script {
-                    // Use PowerShell to set up .NET on Windows
+                    // Use PowerShell to set up .NET with a specified version
                     powershell '''
                         Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
-                        .\\dotnet-install.ps1 -Channel ${env.DOTNET_VERSION}
+                        .\\dotnet-install.ps1 -Version ${env.DOTNET_VERSION}
                         $env:PATH="$env:USERPROFILE\\.dotnet;$env:PATH"
                     '''
                 }
