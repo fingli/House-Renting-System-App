@@ -1,7 +1,9 @@
 pipeline {
-    agent any // Allows the pipeline to run on any available agent
+    agent {
+        label 'windows' // Replace with the actual label of your Windows agent
+    }
     environment {
-        DOTNET_VERSION = '8.0.100' // Specify the exact .NET SDK version
+        DOTNET_VERSION = '8.0.11' // Specify the exact .NET SDK version
     }
     stages {
         stage('Checkout') {
@@ -12,55 +14,37 @@ pipeline {
         stage('Setup .NET') {
             steps {
                 script {
-                    // Use PowerShell on Windows or Bash on Linux/Mac
-                    if (isUnix()) {
-                        sh '''
-                            wget https://dot.net/v1/dotnet-install.sh
-                            chmod +x dotnet-install.sh
-                            ./dotnet-install.sh --version ${DOTNET_VERSION}
-                            export PATH=$HOME/.dotnet:$PATH
-                        '''
-                    } else {
-                        powershell '''
-                            Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
-                            .\\dotnet-install.ps1 -Version ${env.DOTNET_VERSION} -InstallDir $env:USERPROFILE\\.dotnet
-                            $env:PATH="$env:USERPROFILE\\.dotnet;$env:PATH"
-                        '''
-                    }
+                    // Use PowerShell to set up .NET with the specified version
+                    powershell '''
+                        $url = "https://dot.net/v1/dotnet-install.ps1"
+                        $output = "dotnet-install.ps1"
+                        
+                        # Download the script
+                        Invoke-WebRequest -Uri $url -OutFile $output -UseBasicParsing
+
+                        # Run the script with the exact version
+                        .\\dotnet-install.ps1 -Version ${env.DOTNET_VERSION} -InstallDir $env:USERPROFILE\\.dotnet
+
+                        # Add .NET to PATH
+                        $env:PATH="$env:USERPROFILE\\.dotnet;$env:PATH"
+                        Write-Host "PATH is now: $env:PATH"
+                    '''
                 }
             }
         }
         stage('Restore Dependencies') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh 'dotnet restore'
-                    } else {
-                        powershell 'dotnet restore'
-                    }
-                }
+                powershell 'dotnet restore'
             }
         }
         stage('Build') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh 'dotnet build --no-restore'
-                    } else {
-                        powershell 'dotnet build --no-restore'
-                    }
-                }
+                powershell 'dotnet build --no-restore'
             }
         }
         stage('Test') {
             steps {
-                script {
-                    if (isUnix()) {
-                        sh 'dotnet test --no-build --verbosity normal'
-                    } else {
-                        powershell 'dotnet test --no-build --verbosity normal'
-                    }
-                }
+                powershell 'dotnet test --no-build --verbosity normal'
             }
         }
     }
