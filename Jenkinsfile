@@ -1,7 +1,6 @@
 pipeline {
-    agent {
-        label 'windows-latest' // Replace with the actual label of your Windows agent
-    }
+    agent any
+    
     environment {
         DOTNET_VERSION = '8.0.x' // Specify the .NET version
     }
