@@ -12,13 +12,21 @@ pipeline {
         stage('Setup .NET') {
             steps {
                 script {
-                    // Use the 'sh' step to set up .NET
-                    sh '''
-                        wget https://dot.net/v1/dotnet-install.sh
-                        chmod +x dotnet-install.sh
-                        ./dotnet-install.sh --channel ${DOTNET_VERSION}
-                        export PATH=$HOME/.dotnet:$PATH
-                    '''
+                    if (isUnix()) {
+					sh '''
+						wget https://dot.net/v1/dotnet-install.sh
+						chmod +x dotnet-install.sh
+						./dotnet-install.sh --version ${DOTNET_VERSION}
+						export PATH=$HOME/.dotnet:$PATH
+						'''
+					} else {
+							powershell '''
+							Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
+							.\\dotnet-install.ps1 -Version ${env.DOTNET_VERSION} -InstallDir $env:USERPROFILE\\.dotnet
+							$env:PATH="$env:USERPROFILE\\.dotnet;$env:PATH"
+							'''
+							}
+
                 }
             }
         }
