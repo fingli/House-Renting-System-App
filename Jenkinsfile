@@ -1,8 +1,7 @@
 pipeline {
-    agent any
-    
+    agent any // Allows the pipeline to run on any available agent
     environment {
-        DOTNET_VERSION = '8.0.404' // Specify the exact .NET SDK version (e.g., 8.0.100)
+        DOTNET_VERSION = '8.0.100' // Specify the exact .NET SDK version
     }
     stages {
         stage('Checkout') {
@@ -13,28 +12,55 @@ pipeline {
         stage('Setup .NET') {
             steps {
                 script {
-                    // Use PowerShell to set up .NET with a specified version
-                    powershell '''
-                        Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
-                        .\\dotnet-install.ps1 -Version ${env.DOTNET_VERSION}
-                        $env:PATH="$env:USERPROFILE\\.dotnet;$env:PATH"
-                    '''
+                    // Use PowerShell on Windows or Bash on Linux/Mac
+                    if (isUnix()) {
+                        sh '''
+                            wget https://dot.net/v1/dotnet-install.sh
+                            chmod +x dotnet-install.sh
+                            ./dotnet-install.sh --version ${DOTNET_VERSION}
+                            export PATH=$HOME/.dotnet:$PATH
+                        '''
+                    } else {
+                        powershell '''
+                            Invoke-WebRequest -Uri https://dot.net/v1/dotnet-install.ps1 -OutFile dotnet-install.ps1
+                            .\\dotnet-install.ps1 -Version ${env.DOTNET_VERSION} -InstallDir $env:USERPROFILE\\.dotnet
+                            $env:PATH="$env:USERPROFILE\\.dotnet;$env:PATH"
+                        '''
+                    }
                 }
             }
         }
         stage('Restore Dependencies') {
             steps {
-                powershell 'dotnet restore'
+                script {
+                    if (isUnix()) {
+                        sh 'dotnet restore'
+                    } else {
+                        powershell 'dotnet restore'
+                    }
+                }
             }
         }
         stage('Build') {
             steps {
-                powershell 'dotnet build --no-restore'
+                script {
+                    if (isUnix()) {
+                        sh 'dotnet build --no-restore'
+                    } else {
+                        powershell 'dotnet build --no-restore'
+                    }
+                }
             }
         }
         stage('Test') {
             steps {
-                powershell 'dotnet test --no-build --verbosity normal'
+                script {
+                    if (isUnix()) {
+                        sh 'dotnet test --no-build --verbosity normal'
+                    } else {
+                        powershell 'dotnet test --no-build --verbosity normal'
+                    }
+                }
             }
         }
     }
