@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'windows' // Replace with the actual label of your Windows agent
+        label 'Built-In Node'
     }
     environment {
         DOTNET_VERSION = '8.0.11' // Specify the exact .NET SDK version
